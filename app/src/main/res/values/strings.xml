@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">FridgeOpenChecker</string>
+
+    <!-- MainActivity トースト用 -->
+    <string name="ble_is_not_supported">BLE is not supported</string>
+    <string name="bluetooth_is_not_supported">Bluetooth is not supported.</string>
+    <string name="bluetooth_is_not_working">Bluetooth is not working.</string>
+
+    <!-- MainActivity メニュー用 -->
+    <string name="search">Search</string>
+
+    <!-- MainActivity ラベル用 -->
+    <string name="device_name">Device Name : </string>
+    <string name="device_address">Device Address : </string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="chara1">Chara1 : </string>
+    <string name="chara2">Chara2 : </string>
+    <string name="chara1_notify">Chara1(Notify) : </string>
+    <string name="sec_100ms">100ms</string>
+    <string name="sec_1000ms">1000ms</string>
+
+    <!-- DeviceListActivity トースト用 -->
+    <string name="unknown_device">Unknown device</string>
+
+    <!-- DeviceListActivity メニュー用 -->
+    <string name="scan">Scan</string>
+    <string name="stop">Stop</string>
+</resources>
