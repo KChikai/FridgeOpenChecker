@@ -106,6 +106,7 @@ class DeviceListActivity : AppCompatActivity(), AdapterView.OnItemClickListener 
         // スキャンに成功（アドバタイジングは一定間隔で常に発行されているため、本関数は一定間隔で呼ばれ続ける）
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
+            println("Scan Result ${result.device}")
             runOnUiThread { mDeviceListAdapter!!.addDevice(result.device) }
         }
 

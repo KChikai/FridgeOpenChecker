@@ -10,15 +10,20 @@
     <string name="search">Search</string>
 
     <!-- MainActivity ラベル用 -->
-    <string name="device_name">Device Name : </string>
-    <string name="device_address">Device Address : </string>
-    <string name="connect">Connect</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="chara1">Chara1 : </string>
-    <string name="chara2">Chara2 : </string>
-    <string name="chara1_notify">Chara1(Notify) : </string>
+    <string name="device_name">デバイス名: </string>
+    <string name="device_address">デバイスアドレス : </string>
+    <string name="connect">接続</string>
+    <string name="disconnect">切断</string>
+    <string name="chara1">輝度取得結果 : </string>
+    <string name="chara2">Notifyの取得間隔: </string>
+    <string name="chara1_notify">現在の輝度 : </string>
     <string name="sec_100ms">100ms</string>
     <string name="sec_1000ms">1000ms</string>
+
+    <string name="uart_get">ブザー状態：</string>
+    <string name="buzzer_setting">ブザー設定</string>
+    <string name="button_buzzer_start">START</string>
+    <string name="button_buzzer_stop">STOP</string>
 
     <!-- DeviceListActivity トースト用 -->
     <string name="unknown_device">Unknown device</string>

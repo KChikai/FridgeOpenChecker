@@ -11,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,11 +30,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     // GUIアイテム
     private lateinit var mButtonConnect: Button     // 接続ボタン
     private lateinit var mButtonDisconnect: Button  // 切断ボタン
-    private lateinit var mButtonReadChara1 : Button // キャラクタリスティック１の読み込みボタン
-    private lateinit var mButtonReadChara2 : Button // キャラクタリスティック２の読み込みボタン
-    private lateinit var mCheckBoxNotifyChara1: CheckBox // キャラクタリスティック１の変更通知ON/OFFチェックボックス
-    private lateinit var mButtonWrite100ms: Button
-    private lateinit var mButtonWrite1000ms: Button
+    private lateinit var mButtonBuzzerStart: Button
+    private lateinit var mButtonBuzzerStop: Button
 
     // BluetoothGattコールバック
     private val mGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
@@ -54,11 +52,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 // 接続可能範囲に入ったら自動接続するために、mBluetoothGatt.connect()を呼び出す。
                 mBluetoothGatt!!.connect()
                 runOnUiThread {
-                    mButtonReadChara1.isEnabled = false
-                    mButtonReadChara2.isEnabled = false
-                    mCheckBoxNotifyChara1.isEnabled = false
-                    mButtonWrite100ms.isEnabled = false
-                    mButtonWrite1000ms.isEnabled = false
+                    mButtonBuzzerStart.isEnabled = false
+                    mButtonBuzzerStop.isEnabled = false
                 }
                 return
             }
@@ -70,25 +65,30 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            println("onCharacteristicRead")
             super.onCharacteristicRead(gatt, characteristic, status)
             if (BluetoothGatt.GATT_SUCCESS != status) {
                 return
             }
 
-            if (characteristic.uuid == UUID_CHARACTERISTIC_PRIVATE1) {
-                val intChara = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 0)
-                val strChara = "${intChara}℃"
+            if (characteristic.uuid == UUID_UART_TX) {
+                val strChara = String(characteristic.getValue())
+                println("Read from TX line: $strChara")
                 runOnUiThread {
-                    (findViewById<View>(R.id.textview_readchara1) as TextView).text = strChara
+                    (findViewById<View>(R.id.textview_uart_read_result) as TextView).text = strChara
                 }
-            }
+                if (strChara == BUZZER_START) {
+                    runOnUiThread {
+                        (findViewById<View>(R.id.button_buzzer_start) as Button).isEnabled = false
+                        (findViewById<View>(R.id.button_buzzer_stop) as Button).isEnabled = true
+                    }
+                } else if (strChara == BUZZER_STOP) {
+                    runOnUiThread {
+                        (findViewById<View>(R.id.button_buzzer_start) as Button).isEnabled = true
+                        (findViewById<View>(R.id.button_buzzer_stop) as Button).isEnabled = false
+                    }
+                }
 
-            if (characteristic.uuid == UUID_CHARACTERISTIC_PRIVATE2) {
-                val intChara = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0)
-                val strChara = "${intChara}ms"
-                runOnUiThread {
-                    (findViewById<View>(R.id.textview_readchara2) as TextView).text = strChara
-                }
             }
         }
 
@@ -101,45 +101,65 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 {
                     continue
                 }
-                if (UUID_SERVICE_PRIVATE == service.uuid) {
+                if (UUID_UART_SERVICE == service.uuid) {
+                    //uart service found
+                    println("uart service found >> ${service.uuid}")
+
+                    // set notification of UART
+                    setCharacteristicNotification(UUID_UART_SERVICE, UUID_UART_TX, true)
                     runOnUiThread {
-                        mButtonReadChara1.isEnabled = true
-                        mButtonReadChara2.isEnabled = true
-                        mCheckBoxNotifyChara1.isEnabled = true
-                        mButtonWrite100ms.isEnabled = true
-                        mButtonWrite1000ms.isEnabled = true
+                        mButtonBuzzerStart.isEnabled = true
+                        mButtonBuzzerStop.isEnabled = true
                     }
                 }
             }
         }
 
+        /** call when getting notified data */
         @Deprecated("Deprecated in Java")
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            if (characteristic.uuid == UUID_CHARACTERISTIC_PRIVATE1) {
-                val intChara = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 0)
-                val strChara = "${intChara}℃"
+
+            println("onCharacteristicChanged")
+            if (characteristic.uuid == UUID_UART_TX) {
+                val strChara = String(characteristic.getValue())
+                println("Notify from TX line: $strChara")
                 runOnUiThread {
-                    (findViewById<View>(R.id.textview_notifychara1) as TextView).text = strChara
+                    (findViewById<View>(R.id.textview_uart_read_result) as TextView).text = strChara
+                }
+                if (strChara == BUZZER_START) {
+                    runOnUiThread {
+                        (findViewById<View>(R.id.imageview_lock_state) as ImageView).setImageResource(R.drawable.icons_unlock)
+                        (findViewById<View>(R.id.button_buzzer_start) as Button).isEnabled = false
+                        (findViewById<View>(R.id.button_buzzer_stop) as Button).isEnabled = true
+                    }
+                } else if (strChara == BUZZER_STOP) {
+                    runOnUiThread {
+                        (findViewById<View>(R.id.imageview_lock_state) as ImageView).setImageResource(R.drawable.icons_lock)
+                        (findViewById<View>(R.id.button_buzzer_start) as Button).isEnabled = true
+                        (findViewById<View>(R.id.button_buzzer_stop) as Button).isEnabled = false
+                    }
                 }
                 return
             }
         }
 
+        /** call when writeCharacteristic() success */
         override fun onCharacteristicWrite(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            println("onCharacteristicWrite")
             super.onCharacteristicWrite(gatt, characteristic, status)
             if (BluetoothGatt.GATT_SUCCESS !=  status) { return }
-            if (characteristic.uuid == UUID_CHARACTERISTIC_PRIVATE2) {
+            if (characteristic.uuid == UUID_UART_RX) {
                 runOnUiThread {
-                    mButtonWrite100ms.isEnabled = true
-                    mButtonWrite1000ms.isEnabled = true
+                    mButtonBuzzerStart.isEnabled = true
+                    mButtonBuzzerStop.isEnabled = false
                 }
                 return
             }
@@ -153,16 +173,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         mButtonDisconnect = findViewById(R.id.button_disconnect)
         mButtonConnect.setOnClickListener(this)
         mButtonDisconnect.setOnClickListener(this)
-        mButtonReadChara1 = findViewById( R.id.button_readchara1 )
-        mButtonReadChara1.setOnClickListener( this )
-        mButtonReadChara2 = findViewById( R.id.button_readchara2 )
-        mButtonReadChara2.setOnClickListener( this )
-        mCheckBoxNotifyChara1 = findViewById(R.id.checkbox_notifychara1)
-        mCheckBoxNotifyChara1.setOnClickListener(this)
-        mButtonWrite100ms = findViewById(R.id.button_write_100ms)
-        mButtonWrite100ms.setOnClickListener(this)
-        mButtonWrite1000ms = findViewById(R.id.button_write_1000ms)
-        mButtonWrite1000ms.setOnClickListener(this)
+        mButtonBuzzerStart = findViewById(R.id.button_buzzer_start)
+        mButtonBuzzerStart.setOnClickListener(this)
+        mButtonBuzzerStop = findViewById(R.id.button_buzzer_stop)
+        mButtonBuzzerStop.setOnClickListener(this)
+
 
         // check if ble is supported
         packageManager.takeIf { it.missingSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) }?.let {
@@ -190,15 +205,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         // GUIアイテムの有効無効の設定
         mButtonConnect.isEnabled = false
         mButtonDisconnect.isEnabled = false
-        mButtonReadChara1.isEnabled = false
-        mButtonReadChara2.isEnabled = false
-        mCheckBoxNotifyChara1.isEnabled = false
-        mCheckBoxNotifyChara1.isChecked = false
-        mButtonWrite100ms.isEnabled = false
-        mButtonWrite1000ms.isEnabled = false
+        mButtonBuzzerStart.isEnabled = false
+        mButtonBuzzerStop.isEnabled = false
 
         // デバイスアドレスが空でなければ、接続ボタンを有効にする。
-        if (mDeviceAddress != "") {
+        if (mDeviceAddress.isNotEmpty()) {
             mButtonConnect.isEnabled = true
         }
 
@@ -229,6 +240,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View) {
+        // 接続切断ボタンの押下時の挙動
         if (mButtonConnect.id == v.id) {
             mButtonConnect.isEnabled = false // 接続ボタンの無効化（連打対策）
             connect() // 接続
@@ -239,29 +251,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             disconnect() // 切断
             return
         }
-        if (mButtonReadChara1.id == v.id) {
-            readCharacteristic(UUID_SERVICE_PRIVATE, UUID_CHARACTERISTIC_PRIVATE1)
+
+        // Buzzer setting by UART
+        if (mButtonBuzzerStart.id == v.id && v.isEnabled) {
+            mButtonBuzzerStart.isEnabled = false
+            mButtonBuzzerStop.isEnabled = false
+            writeUartCharacteristic(UUID_UART_SERVICE, UUID_UART_RX, BUZZER_START)
             return
         }
-        if (mButtonReadChara2.id == v.id) {
-            readCharacteristic(UUID_SERVICE_PRIVATE, UUID_CHARACTERISTIC_PRIVATE2)
-            return
-        }
-        if (mCheckBoxNotifyChara1.id == v.id) {
-            setCharacteristicNotification(UUID_SERVICE_PRIVATE, UUID_CHARACTERISTIC_PRIVATE1, mCheckBoxNotifyChara1.isChecked)
-            return
-        }
-        if (mButtonWrite100ms.id == v.id) {
-            mButtonWrite100ms.isEnabled = false
-            mButtonWrite1000ms.isEnabled = false
-            writeCharacteristic(UUID_SERVICE_PRIVATE, UUID_CHARACTERISTIC_PRIVATE2, "100")
-            return
-        }
-        if (mButtonWrite1000ms.id == v.id) {
-            mButtonWrite100ms.isEnabled = false
-            mButtonWrite1000ms.isEnabled = false
-            writeCharacteristic(UUID_SERVICE_PRIVATE, UUID_CHARACTERISTIC_PRIVATE2, "1000")
-            return
+        if (mButtonBuzzerStop.id == v.id && v.isEnabled) {
+            mButtonBuzzerStart.isEnabled = false
+            mButtonBuzzerStop.isEnabled = false
+            writeUartCharacteristic(UUID_UART_SERVICE, UUID_UART_RX, BUZZER_STOP)
         }
     }
 
@@ -286,9 +287,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
         (findViewById<View>(R.id.textview_devicename) as TextView).text = strDeviceName
         (findViewById<View>(R.id.textview_deviceaddress) as TextView).text = mDeviceAddress
-        (findViewById<View>(R.id.textview_readchara1) as TextView).text = ""
-        (findViewById<View>(R.id.textview_readchara2) as TextView).text = ""
-        (findViewById<View>(R.id.textview_notifychara1) as TextView).text = ""
+        (findViewById<View>(R.id.textview_uart_read_result) as TextView).text = ""
     }
 
     // オプションメニュー作成時の処理
@@ -313,7 +312,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private fun connect() {
         if (mDeviceAddress == "") { return }
         if (mBluetoothGatt != null) { return }
-        var device = mBluetoothAdapter!!.getRemoteDevice(mDeviceAddress)
+        val device = mBluetoothAdapter!!.getRemoteDevice(mDeviceAddress)
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback)
     }
 
@@ -332,12 +331,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         // 接続ボタンのみ有効にする
         mButtonConnect.isEnabled = true
         mButtonDisconnect.isEnabled = false
-        mButtonReadChara1.isEnabled = false
-        mButtonReadChara2.isEnabled = false
-        mCheckBoxNotifyChara1.isEnabled = false
-        mCheckBoxNotifyChara1.isChecked = false
-        mButtonWrite100ms.isEnabled = false
-        mButtonWrite1000ms.isEnabled = false
+        mButtonBuzzerStart.isEnabled = false
+        mButtonBuzzerStop.isEnabled = false
     }
 
     // キャラクタリスティックの読み込み
@@ -353,7 +348,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val bleChar = mBluetoothGatt!!.getService(uuiService).getCharacteristic(uuidCharacteristic)
         mBluetoothGatt!!.setCharacteristicNotification(bleChar, isEnabled)
         val descriptor = bleChar.getDescriptor(UUID_NOTIFY)
-        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        descriptor.value = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
         mBluetoothGatt!!.writeDescriptor(descriptor)
     }
 
@@ -364,13 +359,24 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         mBluetoothGatt!!.writeCharacteristic(bleChar)
     }
 
+    private fun writeUartCharacteristic(uuidService: UUID, uuidCharacteristic: UUID, string: String) {
+        mBluetoothGatt ?: return
+        val bleChar = mBluetoothGatt!!.getService(uuidService).getCharacteristic(uuidCharacteristic)
+        bleChar.setValue(string + "\n")
+        mBluetoothGatt!!.writeCharacteristic(bleChar)
+    }
+
     // 定数（Bluetooth LE Gatt UUID）
     companion object {
-        // Private Service
-        private val UUID_SERVICE_PRIVATE: UUID = UUID.fromString("E95D6100-251D-470A-A062-FA1922DFA9A8")
-        private val UUID_CHARACTERISTIC_PRIVATE1: UUID = UUID.fromString("E95D9250-251D-470A-A062-FA1922DFA9A8")
-        private val UUID_CHARACTERISTIC_PRIVATE2: UUID = UUID.fromString("E95D1B25-251D-470A-A062-FA1922DFA9A8")
+        // uart service
+        private val UUID_UART_SERVICE: UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
+        private val UUID_UART_TX: UUID = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+        private val UUID_UART_RX: UUID = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e")
+
         // for Notification
         private val UUID_NOTIFY: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")   // 固定
+
+        private const val BUZZER_START = "BUZZER START"
+        private const val BUZZER_STOP = "BUZZER STOP"
     }
 }

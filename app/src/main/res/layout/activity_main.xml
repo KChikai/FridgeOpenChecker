@@ -91,11 +91,10 @@
         android:layout_margin="10dp"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/button_readchara1"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/chara1"
+            android:text="@string/uart_get"
             android:textSize="18sp"/>
 
         <Space
@@ -103,11 +102,10 @@
             android:layout_height="wrap_content"/>
 
         <TextView
-            android:id="@+id/textview_readchara1"
+            android:id="@+id/textview_uart_read_result"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="18sp"/>
-
     </LinearLayout>
 
     <LinearLayout
@@ -116,48 +114,14 @@
         android:layout_margin="10dp"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/button_readchara2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/chara2"
-            android:textSize="18sp"/>
-
-        <Space
-            android:layout_width="5dp"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/textview_readchara2"
+        <ImageView
+            android:id="@+id/imageview_lock_state"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"/>
+            android:layout_height="200dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icons_lock">
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="horizontal">
-
-        <CheckBox
-            android:id="@+id/checkbox_notifychara1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/chara1_notify"
-            android:textSize="18sp"/>
-
-        <Space
-            android:layout_width="5dp"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/textview_notifychara1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"/>
-
+        </ImageView>
     </LinearLayout>
 
     <LinearLayout
@@ -169,7 +133,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/chara2"
+            android:text="@string/buzzer_setting"
             android:textSize="18sp"/>
 
         <Space
@@ -177,10 +141,10 @@
             android:layout_height="wrap_content"/>
 
         <Button
-            android:id="@+id/button_write_100ms"
+            android:id="@+id/button_buzzer_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sec_100ms"
+            android:text="@string/button_buzzer_start"
             android:textSize="18sp"/>
 
         <Space
@@ -188,10 +152,10 @@
             android:layout_height="wrap_content"/>
 
         <Button
-            android:id="@+id/button_write_1000ms"
+            android:id="@+id/button_buzzer_stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sec_1000ms"
+            android:text="@string/button_buzzer_stop"
             android:textSize="18sp"/>
     </LinearLayout>
 </LinearLayout>
